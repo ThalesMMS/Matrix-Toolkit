@@ -1,62 +1,68 @@
 # Matrix Toolkit
 
-Matrix Toolkit gathers small, self-contained Python scripts that help with classroom linear algebra exercises. Each script lives under `scripts/`, guides the user interactively, and keeps calculations exact by relying on Python's `fractions.Fraction`.
+Matrix Toolkit offers classroom-friendly matrix calculations that keep arithmetic exact through Python's `fractions.Fraction`. The core logic now lives in a reusable package, and the interactive command line interface is in Portuguese, while all documentation stays in English.
 
-- `scripts/matriz_fera.py` performs Gauss–Jordan elimination step by step, showing every row operation that leads a matrix to its reduced row echelon form (RREF).
-- `scripts/matriz_inversa_cofatores.py` computes the determinant, cofactor matrix, adjugate and inverse of a square matrix using the classical cofactor method.
+## Features
+
+- Addition, subtraction, scalar multiplication, and matrix multiplication.
+- Transpose, determinant, cofactor matrix, adjugate, and inverse (with singularity checks).
+- Reduced Row Echelon Form (RREF) with a step-by-step log.
+- Exact arithmetic via `fractions.Fraction`; no third-party dependencies.
+- Interactive CLI in Portuguese for quick calculations.
 
 ## Requirements
 
-- Python 3.8 or newer.  
-  No third-party libraries are necessary; the scripts use only the standard library.
+- Python 3.8 or newer; standard library only.
 
-## Usage
+## Usage (CLI in Portuguese)
 
-Run the scripts directly with Python. They will prompt for the matrix dimensions and entries.
-
-### Reduced Row Echelon Form (RREF)
+Run the unified menu-driven CLI:
 
 ```bash
-python scripts/matriz_fera.py
+python scripts/matrix_cli.py
+# or
+python -m matrix_toolkit.cli
 ```
 
-Example session:
+Available actions:
 
-```
-Digite linhas e colunas (m n): 3 4
-Digite a linha 1: 1 2 3 4
-Digite a linha 2: 0 1 4 5
-Digite a linha 3: 2 3 4 5
-```
+- Somar, subtrair, multiplicar por escalar, multiplicar matrizes.
+- Transposta, determinante, inversa (mostrando cofatores e adjunta).
+- Forma escalonada reduzida (RREF) com todos os passos.
 
-The program then prints every row operation and the final FER(A) (RREF) matrix.
+Legacy-style entry points remain for single tasks:
 
-### Inverse via Cofactors
+- `python scripts/matriz_fera.py` – RREF with printed row operations.
+- `python scripts/matriz_inversa_cofatores.py` – Determinant, cofactors, adjugate, and inverse.
 
-```bash
-python scripts/matriz_inversa_cofatores.py
-```
+## Using the library in Python code
 
-Sample interaction:
+```python
+from matrix_toolkit import add_matrices, determinant, inverse
 
-```
-Digite a ordem da matriz (n): 3
-Digite a linha 1 (separada por espaços, ex: 1 2.5 3/4): 1 0 2
-Digite a linha 2 (separada por espaços, ex: 1 2.5 3/4): 0 1 0
-Digite a linha 3 (separada por espaços, ex: 1 2.5 3/4): 4 0 1
+a = [[1, 2], [3, 4]]
+b = [[2, 0], [1, 2]]
+sum_ab = add_matrices(a, b)
+det_a = determinant(a)
+inv_a = inverse(a)  # raises ValueError if singular
 ```
 
-If the determinant is zero, the script explains that the matrix has no inverse; otherwise it prints the determinant, cofactor matrix, adjugate and inverse.
+All functions accept any numeric input coercible to `Fraction` and perform validation (shape checks, square requirements, etc.).
 
 ## Repository Structure
 
 ```
 README.md
 LICENSE
-.gitignore
+matrix_toolkit/
+  __init__.py
+  cli.py                 # Portuguese CLI menu
+  interactive.py         # Input/output helpers (Portuguese prompts)
+  operations.py          # Pure matrix operations built on Fraction
 scripts/
-  matriz_fera.py                # RREF with detailed Gauss–Jordan steps
-  matriz_inversa_cofatores.py   # Determinant and inverse via cofactors
+  matrix_cli.py          # Entry point for the CLI menu
+  matriz_fera.py         # RREF, uses the shared operations
+  matriz_inversa_cofatores.py   # Determinant, cofatores, adjunta, inversa
 ```
 
 ## License

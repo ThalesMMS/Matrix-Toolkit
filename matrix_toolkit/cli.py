@@ -1,3 +1,12 @@
+#
+# cli.py
+# Matrix Toolkit
+#
+# Text-based menu for performing common matrix operations interactively,
+# delegating computation to the core library and showing intermediate steps.
+#
+# Thales Matheus Mendonça Santos - November 2025
+
 """Interactive CLI (Portuguese) for common matrix operations."""
 
 from __future__ import annotations
@@ -20,12 +29,14 @@ from . import interactive as ui
 
 
 def _header(title: str) -> None:
+    # Simple visual separator so each operation stands out in the console.
     print("=" * len(title))
     print(title)
     print("=" * len(title))
 
 
 def _print_steps(steps) -> None:
+    # Steps come as (description, matrix_state); we print them sequentially.
     for desc, state in steps:
         ui.print_matrix(state, desc)
 
@@ -62,6 +73,7 @@ def _handle_matrix_multiplication() -> None:
     rows_a, cols_a = ui.read_dimensions("A")
     matriz_a = ui.read_matrix(rows_a, cols_a, "A")
     print("Para multiplicar, o numero de colunas de A deve ser igual ao numero de linhas de B.")
+    # Ask only for number of columns of B because its rows must equal cols_a.
     raw_cols_b = input(f"Digite o numero de colunas da matriz B (linhas fixas = {cols_a}): ").strip()
     try:
         cols_b = int(raw_cols_b)
@@ -100,6 +112,7 @@ def _handle_inverse() -> None:
     cof = cofactor_matrix(matriz)
     adj = adjugate(matriz)
     inv = inverse(matriz)
+    # Show intermediate products so the user learns how the inverse is built.
     ui.print_matrix(cof, "Matriz de cofatores:")
     ui.print_matrix(adj, "Matriz adjunta:")
     ui.print_matrix(inv, "Matriz inversa A^(-1):")
@@ -108,6 +121,7 @@ def _handle_inverse() -> None:
 def _handle_rref() -> None:
     _header("Forma escalonada reduzida (RREF)")
     matriz = ui.read_matrix(label="A")
+    # The step log makes the Gauss–Jordan elimination process transparent.
     _, passos = rref_with_steps(matriz)
     _print_steps(passos)
 
@@ -117,6 +131,7 @@ def _exit() -> None:
     raise SystemExit
 
 
+# Menu mapping: option number -> (label shown to user, handler function).
 OPTIONS: Dict[str, Tuple[str, Callable[[], None]]] = {
     "1": ("Somar matrizes", _handle_addition),
     "2": ("Subtrair matrizes", _handle_subtraction),
@@ -131,6 +146,7 @@ OPTIONS: Dict[str, Tuple[str, Callable[[], None]]] = {
 
 
 def main() -> None:
+    # Loop until the user chooses to exit explicitly.
     while True:
         print("=== Matrix Toolkit ===")
         for key in sorted(OPTIONS.keys()):
@@ -144,7 +160,7 @@ def main() -> None:
         try:
             action[1]()
         except KeyboardInterrupt:
-            print("\nInterrompido pelo usuario.\n")
+            print("\nInterrompido pelo usuario.\n")  # Allow Ctrl+C to break out gracefully.
         except Exception as exc:
             print(f"Erro: {exc}\n")
 

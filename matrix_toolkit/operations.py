@@ -1,3 +1,12 @@
+#
+# operations.py
+# Matrix Toolkit
+#
+# Core linear algebra routines (determinant, inverses, RREF, etc.) implemented
+# with Fraction for exact arithmetic so results stay precise during calculations.
+#
+# Thales Matheus Mendonça Santos - November 2025
+
 """Pure matrix operations built on fractions.Fraction."""
 
 from __future__ import annotations
@@ -17,6 +26,7 @@ def _to_fraction(value) -> Fraction:
 
 def _clone_matrix(matrix: Sequence[Sequence]) -> Matrix:
     """Return a deep copy of the matrix, coercing entries to Fraction."""
+    # Coercing up front keeps downstream logic simple and avoids repeated conversions.
     return [[_to_fraction(value) for value in row] for row in matrix]
 
 
@@ -53,7 +63,7 @@ def add_matrices(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
     rows, cols = _validate_same_shape(a, b)
     return [
         [_to_fraction(x) + _to_fraction(y) for x, y in zip(row_a, row_b)]
-        for row_a, row_b in zip(a, b)
+        for row_a, row_b in zip(a, b)  # Pairwise addition on each row.
     ]
 
 
@@ -62,7 +72,7 @@ def subtract_matrices(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
     rows, cols = _validate_same_shape(a, b)
     return [
         [_to_fraction(x) - _to_fraction(y) for x, y in zip(row_a, row_b)]
-        for row_a, row_b in zip(a, b)
+        for row_a, row_b in zip(a, b)  # Pairwise subtraction on each row.
     ]
 
 
@@ -86,8 +96,9 @@ def multiply_matrices(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
     for i in range(rows_a):
         row_result: List[Fraction] = []
         for j in range(cols_b):
-            total = Fraction(0, 1)
+            total = Fraction(0, 1)  # Start accumulation for position (i, j).
             for k in range(cols_a):
+                # Standard dot product: row i of A with column j of B.
                 total += a_f[i][k] * b_f[k][j]
             row_result.append(total)
         result.append(row_result)
@@ -115,7 +126,8 @@ def determinant(matrix: Sequence[Sequence]) -> Fraction:
         sign = Fraction((-1) ** column, 1)
         submatrix = [
             [matrix_f[r][c] for c in range(size) if c != column] for r in range(1, size)
-        ]
+        ]  # Remove first row and current column to build minor matrix.
+        # Expand along the first row: element * cofactor (sign * det(minor)).
         det += matrix_f[0][column] * sign * determinant(submatrix)
     return det
 
@@ -141,6 +153,7 @@ def cofactor_matrix(matrix: Sequence[Sequence]) -> Matrix:
 
 def adjugate(matrix: Sequence[Sequence]) -> Matrix:
     """Return the adjugate (transpose of the cofactor matrix)."""
+    # The adjugate is the transposed cofactor matrix and is key to computing inverses.
     return transpose(cofactor_matrix(matrix))
 
 
@@ -152,6 +165,7 @@ def inverse(matrix: Sequence[Sequence]) -> Matrix:
 
     adj = adjugate(matrix)
     det_inverse = Fraction(1, 1) / det
+    # Multiply each entry of the adjugate by 1/det to finish A^{-1}.
     return [[entry * det_inverse for entry in row] for row in adj]
 
 
@@ -170,8 +184,8 @@ def rref_with_steps(matrix: Sequence[Sequence]) -> Tuple[Matrix, StepLog]:
     """
     rows, cols = _validate_rectangular(matrix)
     work = _clone_matrix(matrix)
-    steps: StepLog = [("Matriz inicial", _clone_matrix(work))]
-    pivot_row = 0
+    steps: StepLog = [("Matriz inicial", _clone_matrix(work))]  # Keep the starting point for display.
+    pivot_row = 0  # Tracks which row should receive the next pivot.
 
     for col in range(cols):
         # Find pivot row.
@@ -181,6 +195,7 @@ def rref_with_steps(matrix: Sequence[Sequence]) -> Tuple[Matrix, StepLog]:
                 selected = row
                 break
         if selected is None:
+            # No pivot in this column; move to next column.
             continue
 
         # Swap into place.
@@ -193,6 +208,7 @@ def rref_with_steps(matrix: Sequence[Sequence]) -> Tuple[Matrix, StepLog]:
         pivot_value = work[pivot_row][col]
         if pivot_value != 1:
             factor = Fraction(1, 1) / pivot_value
+            # Normalize the pivot row so the pivot entry becomes 1.
             work[pivot_row] = [value * factor for value in work[pivot_row]]
             steps.append(
                 (
@@ -206,7 +222,7 @@ def rref_with_steps(matrix: Sequence[Sequence]) -> Tuple[Matrix, StepLog]:
             if row == pivot_row or work[row][col] == 0:
                 continue
             factor = work[row][col]
-            work[row] = [a - factor * b for a, b in zip(work[row], work[pivot_row])]
+            work[row] = [a - factor * b for a, b in zip(work[row], work[pivot_row])]  # Row_i <- Row_i - factor * pivot row.
             steps.append(
                 (
                     f"R{row + 1} = R{row + 1} - {_format_fraction(factor)} * R{pivot_row + 1}",
@@ -214,7 +230,7 @@ def rref_with_steps(matrix: Sequence[Sequence]) -> Tuple[Matrix, StepLog]:
                 )
             )
 
-        pivot_row += 1
+        pivot_row += 1  # Move pivot down one row before scanning next column.
         if pivot_row == rows:
             break
 

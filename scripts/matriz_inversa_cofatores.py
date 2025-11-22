@@ -1,3 +1,12 @@
+#
+# matriz_inversa_cofatores.py
+# Matrix Toolkit
+#
+# Computes determinant, cofactor matrix, adjugate, and inverse for a square
+# matrix, printing intermediate results so users can see how A^{-1} is built.
+#
+# Thales Matheus Mendonça Santos - November 2025
+
 """Determinante, cofatores, adjunta e inversa de matriz quadrada."""
 
 from matrix_toolkit import adjugate, cofactor_matrix, determinant, inverse
@@ -12,6 +21,7 @@ def main() -> None:
         print("A matriz nao e invertivel (determinante zero).")
         return
 
+    # Cofactor and adjugate highlight the structure used to build the inverse.
     cofatores = cofactor_matrix(matriz)
     adj = adjugate(matriz)
     try:

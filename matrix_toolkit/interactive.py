@@ -1,3 +1,12 @@
+#
+# interactive.py
+# Matrix Toolkit
+#
+# Input/output helpers for the CLI, handling matrix sizes, entries, and display
+# formatting while validating user-provided fractions for reliable operations.
+#
+# Thales Matheus Mendonça Santos - November 2025
+
 """CLI helpers for interactive matrix input/output (Portuguese prompts)."""
 
 from __future__ import annotations
@@ -37,7 +46,7 @@ def read_matrix(rows: int | None = None, cols: int | None = None, label: str | N
         line = input(
             f"Digite a linha {r + 1}{target} (use espacos entre valores, ex: 1 -2 3/4): "
         ).strip()
-        entries = line.split()
+        entries = line.split()  # Split by whitespace to allow fractions like 3/4.
         if len(entries) != cols:
             raise ValueError("Numero incorreto de colunas para esta linha.")
         matrix.append([_parse_fraction(value) for value in entries])
@@ -54,6 +63,7 @@ def read_square_matrix(order: int | None = None, label: str | None = None) -> Ma
             raise ValueError("A ordem deve ser um inteiro.") from exc
     if order <= 0:
         raise ValueError("A ordem deve ser positiva.")
+    # Reuse read_matrix to centralize parsing/validation.
     return read_matrix(order, order, label)
 
 
@@ -63,6 +73,7 @@ def read_scalar(prompt: str = "Digite o escalar: ") -> Fraction:
 
 
 def _format_fraction(value: Fraction) -> str:
+    # Display integers plainly and proper fractions with a slash.
     return f"{value.numerator}/{value.denominator}" if value.denominator != 1 else str(
         value.numerator
     )

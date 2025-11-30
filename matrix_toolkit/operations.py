@@ -242,3 +242,374 @@ def rref(matrix: Sequence[Sequence]) -> Matrix:
     """Return only the final RREF matrix."""
     result, _ = rref_with_steps(matrix)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Additional Matrix Operations
+# ---------------------------------------------------------------------------
+
+
+def identity_matrix(size: int) -> Matrix:
+    """Create an identity matrix of given size."""
+    if size <= 0:
+        raise ValueError("O tamanho deve ser positivo.")
+    return [
+        [Fraction(1) if i == j else Fraction(0) for j in range(size)]
+        for i in range(size)
+    ]
+
+
+def zero_matrix(rows: int, cols: int) -> Matrix:
+    """Create a zero matrix with given dimensions."""
+    if rows <= 0 or cols <= 0:
+        raise ValueError("As dimensoes devem ser positivas.")
+    return [[Fraction(0) for _ in range(cols)] for _ in range(rows)]
+
+
+def diagonal(matrix: Sequence[Sequence]) -> List[Fraction]:
+    """Extract the main diagonal of the matrix."""
+    rows, cols = _validate_rectangular(matrix)
+    matrix_f = _clone_matrix(matrix)
+    return [matrix_f[i][i] for i in range(min(rows, cols))]
+
+
+def trace(matrix: Sequence[Sequence]) -> Fraction:
+    """Compute the trace (sum of diagonal elements) of a square matrix."""
+    _validate_square(matrix)
+    return sum(diagonal(matrix), Fraction(0))
+
+
+def is_symmetric(matrix: Sequence[Sequence]) -> bool:
+    """Check if the matrix is symmetric (equal to its transpose)."""
+    size = _validate_square(matrix)
+    matrix_f = _clone_matrix(matrix)
+    for i in range(size):
+        for j in range(i + 1, size):
+            if matrix_f[i][j] != matrix_f[j][i]:
+                return False
+    return True
+
+
+def is_diagonal(matrix: Sequence[Sequence]) -> bool:
+    """Check if the matrix is diagonal (all off-diagonal entries are zero)."""
+    size = _validate_square(matrix)
+    matrix_f = _clone_matrix(matrix)
+    for i in range(size):
+        for j in range(size):
+            if i != j and matrix_f[i][j] != 0:
+                return False
+    return True
+
+
+def is_identity(matrix: Sequence[Sequence]) -> bool:
+    """Check if the matrix is an identity matrix."""
+    size = _validate_square(matrix)
+    matrix_f = _clone_matrix(matrix)
+    for i in range(size):
+        for j in range(size):
+            expected = Fraction(1) if i == j else Fraction(0)
+            if matrix_f[i][j] != expected:
+                return False
+    return True
+
+
+def is_zero(matrix: Sequence[Sequence]) -> bool:
+    """Check if all entries in the matrix are zero."""
+    _validate_rectangular(matrix)
+    matrix_f = _clone_matrix(matrix)
+    for row in matrix_f:
+        for value in row:
+            if value != 0:
+                return False
+    return True
+
+
+def is_upper_triangular(matrix: Sequence[Sequence]) -> bool:
+    """Check if the matrix is upper triangular (zeros below main diagonal)."""
+    size = _validate_square(matrix)
+    matrix_f = _clone_matrix(matrix)
+    for i in range(size):
+        for j in range(i):
+            if matrix_f[i][j] != 0:
+                return False
+    return True
+
+
+def is_lower_triangular(matrix: Sequence[Sequence]) -> bool:
+    """Check if the matrix is lower triangular (zeros above main diagonal)."""
+    size = _validate_square(matrix)
+    matrix_f = _clone_matrix(matrix)
+    for i in range(size):
+        for j in range(i + 1, size):
+            if matrix_f[i][j] != 0:
+                return False
+    return True
+
+
+def matrix_power(matrix: Sequence[Sequence], exponent: int) -> Matrix:
+    """Raise a square matrix to an integer power (non-negative or -1 for inverse)."""
+    size = _validate_square(matrix)
+
+    if exponent < -1:
+        raise ValueError("Expoentes menores que -1 nao sao suportados diretamente.")
+
+    if exponent == -1:
+        return inverse(matrix)
+
+    if exponent == 0:
+        return identity_matrix(size)
+
+    # Binary exponentiation for efficiency.
+    result = identity_matrix(size)
+    base = _clone_matrix(matrix)
+
+    power = exponent
+    while power > 0:
+        if power % 2 == 1:
+            result = multiply_matrices(result, base)
+        base = multiply_matrices(base, base)
+        power //= 2
+
+    return result
+
+
+def rank(matrix: Sequence[Sequence]) -> int:
+    """Compute the rank of a matrix (number of non-zero rows in RREF)."""
+    reduced = rref(matrix)
+    count = 0
+    for row in reduced:
+        if any(value != 0 for value in row):
+            count += 1
+    return count
+
+
+def nullity(matrix: Sequence[Sequence]) -> int:
+    """Compute the nullity of a matrix (number of columns minus rank)."""
+    rows, cols = _validate_rectangular(matrix)
+    return cols - rank(matrix)
+
+
+def lu_decomposition(matrix: Sequence[Sequence]) -> Tuple[Matrix, Matrix]:
+    """
+    Compute the LU decomposition of a square matrix (without pivoting).
+
+    Returns (L, U) where A = L * U, L is lower triangular with ones on the
+    diagonal, and U is upper triangular.
+
+    Raises an error if a zero pivot is encountered (pivoting not supported).
+    """
+    size = _validate_square(matrix)
+    L = identity_matrix(size)
+    U = _clone_matrix(matrix)
+
+    for col in range(size):
+        if U[col][col] == 0:
+            raise ValueError(
+                "Decomposicao LU sem pivoteamento falhou; encontrou pivo zero."
+            )
+        for row in range(col + 1, size):
+            factor = U[row][col] / U[col][col]
+            L[row][col] = factor
+            for k in range(col, size):
+                U[row][k] -= factor * U[col][k]
+
+    return L, U
+
+
+def lu_decomposition_with_steps(
+    matrix: Sequence[Sequence],
+) -> Tuple[Matrix, Matrix, StepLog]:
+    """LU decomposition with step-by-step log for educational display."""
+    size = _validate_square(matrix)
+    L = identity_matrix(size)
+    U = _clone_matrix(matrix)
+    steps: StepLog = [("Matriz inicial U", _clone_matrix(U))]
+
+    for col in range(size):
+        if U[col][col] == 0:
+            raise ValueError(
+                "Decomposicao LU sem pivoteamento falhou; encontrou pivo zero."
+            )
+        for row in range(col + 1, size):
+            factor = U[row][col] / U[col][col]
+            L[row][col] = factor
+            for k in range(col, size):
+                U[row][k] -= factor * U[col][k]
+            steps.append(
+                (
+                    f"L[{row+1}][{col+1}] = {_format_fraction(factor)}, "
+                    f"U: R{row+1} = R{row+1} - {_format_fraction(factor)} * R{col+1}",
+                    _clone_matrix(U),
+                )
+            )
+
+    steps.append(("Matriz L final", _clone_matrix(L)))
+    steps.append(("Matriz U final", _clone_matrix(U)))
+    return L, U, steps
+
+
+def solve_system(A: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
+    """
+    Solve the linear system Ax = b using RREF on the augmented matrix.
+
+    Returns the solution vector as a column matrix.
+    Raises an error if the system has no unique solution.
+    """
+    rows_a, cols_a = _validate_rectangular(A)
+    rows_b, cols_b = _validate_rectangular(b)
+
+    if rows_a != rows_b:
+        raise ValueError("O numero de linhas de A deve coincidir com o de b.")
+    if cols_b != 1:
+        raise ValueError("b deve ser uma matriz coluna (uma coluna).")
+
+    # Build augmented matrix [A | b].
+    augmented = [
+        [_to_fraction(val) for val in row_a] + [_to_fraction(b[i][0])]
+        for i, row_a in enumerate(A)
+    ]
+
+    reduced = rref(augmented)
+
+    # Check for inconsistency or free variables.
+    for i, row in enumerate(reduced):
+        # All coefficients zero but constant nonzero means no solution.
+        if all(val == 0 for val in row[:-1]) and row[-1] != 0:
+            raise ValueError("O sistema nao possui solucao (inconsistente).")
+
+    # For unique solution, we need exactly cols_a pivots.
+    pivot_count = rank(A)
+    if pivot_count < cols_a:
+        raise ValueError(
+            "O sistema possui infinitas solucoes (variaveis livres presentes)."
+        )
+
+    # Extract solution from the last column.
+    return [[reduced[i][-1]] for i in range(cols_a)]
+
+
+def solve_system_with_steps(
+    A: Sequence[Sequence], b: Sequence[Sequence]
+) -> Tuple[Matrix, StepLog]:
+    """Solve a linear system with step-by-step log."""
+    rows_a, cols_a = _validate_rectangular(A)
+    rows_b, cols_b = _validate_rectangular(b)
+
+    if rows_a != rows_b:
+        raise ValueError("O numero de linhas de A deve coincidir com o de b.")
+    if cols_b != 1:
+        raise ValueError("b deve ser uma matriz coluna (uma coluna).")
+
+    augmented = [
+        [_to_fraction(val) for val in row_a] + [_to_fraction(b[i][0])]
+        for i, row_a in enumerate(A)
+    ]
+
+    reduced, steps = rref_with_steps(augmented)
+
+    for i, row in enumerate(reduced):
+        if all(val == 0 for val in row[:-1]) and row[-1] != 0:
+            raise ValueError("O sistema nao possui solucao (inconsistente).")
+
+    pivot_count = rank(A)
+    if pivot_count < cols_a:
+        raise ValueError(
+            "O sistema possui infinitas solucoes (variaveis livres presentes)."
+        )
+
+    solution = [[reduced[i][-1]] for i in range(cols_a)]
+    steps.append(("Solucao x", solution))
+    return solution, steps
+
+
+def hadamard_product(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
+    """
+    Element-wise (Hadamard) product of two matrices.
+
+    Both matrices must have the same dimensions.
+    """
+    rows, cols = _validate_same_shape(a, b)
+    a_f = _clone_matrix(a)
+    b_f = _clone_matrix(b)
+    return [[a_f[i][j] * b_f[i][j] for j in range(cols)] for i in range(rows)]
+
+
+def frobenius_norm_squared(matrix: Sequence[Sequence]) -> Fraction:
+    """
+    Compute the squared Frobenius norm (sum of squares of all entries).
+
+    Returns a Fraction; take the square root externally for the actual norm.
+    """
+    _validate_rectangular(matrix)
+    matrix_f = _clone_matrix(matrix)
+    total = Fraction(0)
+    for row in matrix_f:
+        for value in row:
+            total += value * value
+    return total
+
+
+def minor(matrix: Sequence[Sequence], row: int, col: int) -> Fraction:
+    """
+    Compute the (row, col) minor of a square matrix.
+
+    The minor M_ij is the determinant of the submatrix formed by deleting
+    row i and column j.
+    """
+    size = _validate_square(matrix)
+    if row < 0 or row >= size or col < 0 or col >= size:
+        raise ValueError("Indices de linha e coluna devem estar dentro da matriz.")
+    matrix_f = _clone_matrix(matrix)
+    submatrix = [
+        [matrix_f[r][c] for c in range(size) if c != col]
+        for r in range(size)
+        if r != row
+    ]
+    return determinant(submatrix)
+
+
+def cofactor(matrix: Sequence[Sequence], row: int, col: int) -> Fraction:
+    """
+    Compute the (row, col) cofactor of a square matrix.
+
+    Cofactor C_ij = (-1)^(i+j) * M_ij where M_ij is the minor.
+    """
+    sign = Fraction((-1) ** (row + col))
+    return sign * minor(matrix, row, col)
+
+
+def submatrix(
+    matrix: Sequence[Sequence],
+    start_row: int,
+    end_row: int,
+    start_col: int,
+    end_col: int,
+) -> Matrix:
+    """
+    Extract a submatrix from the given matrix.
+
+    Indices are 0-based; end indices are exclusive.
+    """
+    _validate_rectangular(matrix)
+    matrix_f = _clone_matrix(matrix)
+    return [row[start_col:end_col] for row in matrix_f[start_row:end_row]]
+
+
+def concatenate_horizontal(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
+    """Concatenate two matrices horizontally (side by side)."""
+    rows_a, _ = _validate_rectangular(a)
+    rows_b, _ = _validate_rectangular(b)
+    if rows_a != rows_b:
+        raise ValueError("As matrizes devem ter o mesmo numero de linhas.")
+    a_f = _clone_matrix(a)
+    b_f = _clone_matrix(b)
+    return [row_a + row_b for row_a, row_b in zip(a_f, b_f)]
+
+
+def concatenate_vertical(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
+    """Concatenate two matrices vertically (stacked)."""
+    _, cols_a = _validate_rectangular(a)
+    _, cols_b = _validate_rectangular(b)
+    if cols_a != cols_b:
+        raise ValueError("As matrizes devem ter o mesmo numero de colunas.")
+    return _clone_matrix(a) + _clone_matrix(b)

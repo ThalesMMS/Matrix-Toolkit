@@ -7,7 +7,7 @@
 #
 # Thales Matheus Mendonça Santos - November 2025
 
-"""Ponto de entrada para o CLI do Matrix Toolkit."""
+"""Entry point for the Matrix Toolkit CLI."""
 
 from matrix_toolkit.cli import main
 

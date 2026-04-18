@@ -7,7 +7,7 @@
 #
 # Thales Matheus Mendonça Santos - November 2025
 
-"""Determinante, cofatores, adjunta e inversa de matriz quadrada."""
+"""Determinant, cofactors, adjugate, and inverse of a square matrix."""
 
 from matrix_toolkit import adjugate, cofactor_matrix, determinant, inverse
 from matrix_toolkit import interactive as ui
@@ -18,7 +18,7 @@ def main() -> None:
     det = determinant(matriz)
     print(f"det(A) = {det}\n")
     if det == 0:
-        print("A matriz nao e invertivel (determinante zero).")
+        print("The matrix is not invertible (zero determinant).")
         return
 
     # Cofactor and adjugate highlight the structure used to build the inverse.
@@ -27,12 +27,12 @@ def main() -> None:
     try:
         inv = inverse(matriz)
     except ValueError as exc:
-        print(f"Falha ao calcular a inversa: {exc}")
+        print(f"Failed to compute the inverse: {exc}")
         return
 
-    ui.print_matrix(cofatores, "Matriz de cofatores:")
-    ui.print_matrix(adj, "Matriz adjunta:")
-    ui.print_matrix(inv, "Matriz inversa A^(-1):")
+    ui.print_matrix(cofatores, "Cofactor matrix:")
+    ui.print_matrix(adj, "Adjugate matrix:")
+    ui.print_matrix(inv, "Inverse matrix A^(-1):")
 
 
 if __name__ == "__main__":

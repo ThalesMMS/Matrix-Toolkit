@@ -7,7 +7,7 @@
 #
 # Thales Matheus Mendonça Santos - November 2025
 
-"""CLI helpers for interactive matrix input/output (Portuguese prompts)."""
+"""CLI helpers for interactive matrix input/output."""
 
 from __future__ import annotations
 
@@ -21,18 +21,18 @@ def _parse_fraction(value: str) -> Fraction:
     try:
         return Fraction(value)
     except (ValueError, ZeroDivisionError) as exc:
-        raise ValueError(f"Entrada invalida: {value}") from exc
+        raise ValueError(f"Invalid input: {value}") from exc
 
 
 def read_dimensions(label: str | None = None) -> Tuple[int, int]:
-    target = f" da matriz {label}" if label else ""
-    raw = input(f"Digite o numero de linhas e colunas{target} (m n): ").strip()
+    target = f" for matrix {label}" if label else ""
+    raw = input(f"Enter the number of rows and columns{target} (m n): ").strip()
     try:
         rows, cols = map(int, raw.split())
     except ValueError as exc:
-        raise ValueError("Forneca dois inteiros separados por espaco.") from exc
+        raise ValueError("Provide two integers separated by spaces.") from exc
     if rows <= 0 or cols <= 0:
-        raise ValueError("As dimensoes devem ser positivas.")
+        raise ValueError("Dimensions must be positive.")
     return rows, cols
 
 
@@ -40,15 +40,15 @@ def read_matrix(rows: int | None = None, cols: int | None = None, label: str | N
     if rows is None or cols is None:
         rows, cols = read_dimensions(label)
 
-    target = f" da matriz {label}" if label else ""
+    target = f" for matrix {label}" if label else ""
     matrix: Matrix = []
     for r in range(rows):
         line = input(
-            f"Digite a linha {r + 1}{target} (use espacos entre valores, ex: 1 -2 3/4): "
+            f"Enter row {r + 1}{target} (use spaces between values, for example: 1 -2 3/4): "
         ).strip()
         entries = line.split()  # Split by whitespace to allow fractions like 3/4.
         if len(entries) != cols:
-            raise ValueError("Numero incorreto de colunas para esta linha.")
+            raise ValueError("Incorrect number of columns for this row.")
         matrix.append([_parse_fraction(value) for value in entries])
     print()
     return matrix
@@ -56,18 +56,18 @@ def read_matrix(rows: int | None = None, cols: int | None = None, label: str | N
 
 def read_square_matrix(order: int | None = None, label: str | None = None) -> Matrix:
     if order is None:
-        raw = input(f"Digite a ordem da matriz{f' {label}' if label else ''} (n): ").strip()
+        raw = input(f"Enter the order of matrix{f' {label}' if label else ''} (n): ").strip()
         try:
             order = int(raw)
         except ValueError as exc:
-            raise ValueError("A ordem deve ser um inteiro.") from exc
+            raise ValueError("The order must be an integer.") from exc
     if order <= 0:
-        raise ValueError("A ordem deve ser positiva.")
+        raise ValueError("The order must be positive.")
     # Reuse read_matrix to centralize parsing/validation.
     return read_matrix(order, order, label)
 
 
-def read_scalar(prompt: str = "Digite o escalar: ") -> Fraction:
+def read_scalar(prompt: str = "Enter the scalar: ") -> Fraction:
     raw = input(prompt).strip()
     return _parse_fraction(raw)
 

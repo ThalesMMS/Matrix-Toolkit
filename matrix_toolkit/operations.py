@@ -58,6 +58,21 @@ def _validate_square(matrix: Sequence[Sequence]) -> int:
     return rows
 
 
+def _classify_reduced_system(reduced: Matrix, cols_a: int) -> str:
+    """Classify a reduced augmented system, raising for non-unique solutions."""
+    for row in reduced:
+        if all(val == 0 for val in row[:-1]) and row[-1] != 0:
+            raise ValueError("The system has no solution (inconsistent).")
+
+    pivot_count = sum(1 for row in reduced if any(val != 0 for val in row[:-1]))
+    if pivot_count < cols_a:
+        raise ValueError(
+            "The system has infinitely many solutions (free variables are present)."
+        )
+
+    return "unique"
+
+
 def add_matrices(a: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
     """Return the sum A + B."""
     rows, cols = _validate_same_shape(a, b)
@@ -471,18 +486,7 @@ def solve_system(A: Sequence[Sequence], b: Sequence[Sequence]) -> Matrix:
 
     reduced = rref(augmented)
 
-    # Check for inconsistency or free variables.
-    for i, row in enumerate(reduced):
-        # All coefficients zero but constant nonzero means no solution.
-        if all(val == 0 for val in row[:-1]) and row[-1] != 0:
-            raise ValueError("The system has no solution (inconsistent).")
-
-    # For unique solution, we need exactly cols_a pivots.
-    pivot_count = rank(A)
-    if pivot_count < cols_a:
-        raise ValueError(
-            "The system has infinitely many solutions (free variables are present)."
-        )
+    _classify_reduced_system(reduced, cols_a)
 
     # Extract solution from the last column.
     return [[reduced[i][-1]] for i in range(cols_a)]
@@ -507,15 +511,7 @@ def solve_system_with_steps(
 
     reduced, steps = rref_with_steps(augmented)
 
-    for i, row in enumerate(reduced):
-        if all(val == 0 for val in row[:-1]) and row[-1] != 0:
-            raise ValueError("The system has no solution (inconsistent).")
-
-    pivot_count = rank(A)
-    if pivot_count < cols_a:
-        raise ValueError(
-            "The system has infinitely many solutions (free variables are present)."
-        )
+    _classify_reduced_system(reduced, cols_a)
 
     solution = [[reduced[i][-1]] for i in range(cols_a)]
     steps.append(("Solution x", solution))
